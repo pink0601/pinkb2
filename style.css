@@ -1,170 +1,153 @@
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+/* =========================
+基础重置
+========================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-html,
-body{
-    width:100vw;
-    height:100vh;
-    overflow:hidden;
-    background:#000;
-
-    position:fixed;
-    inset:0;
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    position: fixed;
+    inset: 0;
 }
 
-#scene{
-    position:relative;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:#000;
+/* =========================
+主场景容器
+========================= */
+
+#scene {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
-/* 背景层 */
+/* =========================
+背景层（核心）
+========================= */
 
-.bg{
-    position:absolute;
-    inset:0;
+.bg {
+    position: absolute;
+    inset: 0;
 
-    background-size:cover;
-    background-position:center;
-    background-repeat:no-repeat;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 
-    transition:opacity .8s ease;
+    transition: opacity 0.3s ease;
 
-    will-change:opacity;
+    will-change: opacity;
 }
 
-.center{
-    background-image:url("./assets/images/6-1.png");
-    opacity:1;
-    z-index:1;
+/* 中间背景 */
+.bg-center {
+    opacity: 1;
+    z-index: 1;
 }
 
-.left{
-    background-image:url("./assets/images/6-2.png");
-    opacity:0;
-    z-index:2;
+/* 左背景 */
+.bg-left {
+    opacity: 0;
+    z-index: 2;
 }
 
-.right{
-    background-image:url("./assets/images/6-3.png");
-    opacity:0;
-    z-index:3;
+/* 右背景 */
+.bg-right {
+    opacity: 0;
+    z-index: 3;
 }
 
-/* 轻微暗角 */
+/* =========================
+暗角（电影感关键）
+========================= */
 
-#scene::after{
-    content:"";
-    position:absolute;
-    inset:0;
+#scene::after {
+    content: "";
+    position: absolute;
+    inset: 0;
 
-    background:
-    radial-gradient(
-        circle,
-        rgba(0,0,0,0) 45%,
-        rgba(0,0,0,.5) 100%
+    background: radial-gradient(
+        circle at center,
+        rgba(0,0,0,0) 35%,
+        rgba(0,0,0,0.65) 100%
     );
 
-    z-index:5;
-    pointer-events:none;
+    z-index: 5;
+    pointer-events: none;
 }
 
-/* 雾层 */
+/* =========================
+雾气层（轻氛围）
+========================= */
 
-#fog{
-    position:absolute;
-    inset:-20%;
-
-    z-index:6;
+#scene::before {
+    content: "";
+    position: absolute;
+    inset: -20%;
 
     background:
-    radial-gradient(
-        circle at 30% 40%,
-        rgba(255,255,255,.04),
-        transparent 40%
-    ),
-    radial-gradient(
-        circle at 70% 70%,
-        rgba(255,255,255,.03),
-        transparent 35%
-    );
+        radial-gradient(circle at 30% 40%, rgba(255,255,255,0.04), transparent 40%),
+        radial-gradient(circle at 70% 60%, rgba(255,255,255,0.03), transparent 45%);
 
-    animation:fogMove 18s linear infinite;
+    animation: fogMove 18s ease-in-out infinite;
 
-    pointer-events:none;
+    z-index: 4;
+    pointer-events: none;
 }
 
-@keyframes fogMove{
-
-    0%{
-        transform:translateX(-30px);
-    }
-
-    50%{
-        transform:translateX(30px);
-    }
-
-    100%{
-        transform:translateX(-30px);
-    }
+@keyframes fogMove {
+    0%   { transform: translateX(-20px); }
+    50%  { transform: translateX(20px); }
+    100% { transform: translateX(-20px); }
 }
 
-/* 手灯层 */
+/* =========================
+手灯容器（裁切关键）
+========================= */
 
-#lanternWrap{
-    position:absolute;
-    inset:0;
-    overflow:hidden;
+#handWrap {
+    position: absolute;
+    inset: 0;
 
-    z-index:20;
+    overflow: hidden;
 
-    pointer-events:none;
+    z-index: 20;
+
+    pointer-events: none;
 }
 
-/*
-假设素材主体在左侧
-右边大量透明区域
-*/
+/* =========================
+手灯主体
+========================= */
 
-#lantern{
-    position:absolute;
+#handLamp {
+    position: absolute;
 
-    left:-8vw;
-    bottom:25vh;
+    bottom: 7vh;
 
-    width:65vw;
-    height:auto;
+    left: 50%;
 
-    transform:translateX(0);
-}/* 权限提示 */
+    width: 70vw;
+    max-width: none;
 
-#tip{
+    transform: translateX(-50%);
 
-    position:absolute;
+    will-change: transform;
+}
 
-    left:50%;
-    top:50%;
+/* =========================
+安全增强（防止横屏/缩放异常）
+========================= */
 
-    transform:translate(-50%,-50%);
-
-    color:white;
-
-    font-size:18px;
-
-    letter-spacing:2px;
-
-    z-index:100;
-
-    padding:12px 18px;
-
-    border-radius:999px;
-
-    background:rgba(0,0,0,.5);
-
-    backdrop-filter:blur(8px);
+@media (orientation: landscape) {
+    #handLamp {
+        width: 45vw;
+        bottom: 5vh;
+    }
 }
