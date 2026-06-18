@@ -59,7 +59,7 @@ html,body{
 #lantern{
     position:absolute;
     bottom:25vh;   /* ↑ 原来是 6vh，现在抬高 */
-    left:-3vh;
+    left:5vh;
     width:70vw;    /* 稍微收一点避免太大 */
     transform:translateX(-50%);
     will-change:transform;
