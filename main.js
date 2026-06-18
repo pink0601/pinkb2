@@ -28,7 +28,7 @@ const BG_THRESHOLD = 20;
 const MAX_GAMMA = 60;
 
 // 手灯最大移动距离
-const MAX_HAND_MOVE = 80;
+const MAX_HAND_MOVE = 300;
 
 // 缓动系数
 const EASING = 0.08;
