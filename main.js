@@ -1,6 +1,6 @@
-// ============================
-// 元素
-// ============================
+// =========================
+// DOM
+// =========================
 
 const bgCenter = document.querySelector(".bg-center");
 const bgLeft = document.querySelector(".bg-left");
@@ -8,63 +8,58 @@ const bgRight = document.querySelector(".bg-right");
 
 const hand = document.getElementById("handLamp");
 
-// ============================
+// =========================
 // 参数
-// ============================
+// =========================
 
-// 背景切换阈值
-const THRESHOLD = 20;
+const LEFT_THRESHOLD = -20;
+const RIGHT_THRESHOLD = 20;
+const MAX_ANGLE = 60;
 
-// 最大陀螺仪角度
-const MAX_GAMMA = 60;
-
-// 手部最大移动像素
 const MAX_MOVE = 80;
-
-// 缓动
 const EASE = 0.08;
 
-// ============================
-// 状态
-// ============================
+// =========================
+// 状态机
+// =========================
+
+let state = "center"; // center | left | right
 
 let targetX = 0;
 let currentX = 0;
 
-// ============================
-// 工具
-// ============================
+// =========================
+// 限制角度
+// =========================
 
 function clamp(v, min, max) {
     return Math.min(max, Math.max(min, v));
 }
 
-// ============================
-// 背景更新
-// ============================
+// =========================
+// 状态切换
+// =========================
 
-function updateBackground(gamma) {
+function setState(newState) {
 
-    // 左
-    if (gamma < -THRESHOLD) {
+    if (state === newState) return;
+
+    state = newState;
+
+    // 背景切换
+    if (state === "left") {
 
         bgLeft.style.opacity = 1;
         bgCenter.style.opacity = 0;
         bgRight.style.opacity = 0;
 
-    }
-
-    // 右
-    else if (gamma > THRESHOLD) {
+    } else if (state === "right") {
 
         bgRight.style.opacity = 1;
         bgCenter.style.opacity = 0;
         bgLeft.style.opacity = 0;
 
-    }
-
-    // 中
-    else {
+    } else {
 
         bgCenter.style.opacity = 1;
         bgLeft.style.opacity = 0;
@@ -72,56 +67,56 @@ function updateBackground(gamma) {
     }
 }
 
-// ============================
-// 手部移动
-// ============================
+// =========================
+// 输入处理（核心）
+// =========================
 
-function updateHand(gamma) {
+function handleAngle(gamma) {
 
-    // 限幅
-    gamma = clamp(gamma, -MAX_GAMMA, MAX_GAMMA);
+    gamma = clamp(gamma, -MAX_ANGLE, MAX_ANGLE);
 
-    targetX = (gamma / MAX_GAMMA) * MAX_MOVE;
+    // 状态判断
+    if (gamma < LEFT_THRESHOLD) {
+        setState("left");
+    } 
+    else if (gamma > RIGHT_THRESHOLD) {
+        setState("right");
+    } 
+    else {
+        setState("center");
+    }
+
+    // 手部映射（连续）
+    targetX = (gamma / MAX_ANGLE) * MAX_MOVE;
 }
 
-// ============================
-// 统一处理
-// ============================
-
-function handleInput(gamma) {
-
-    updateBackground(gamma);
-    updateHand(gamma);
-}
-
-// ============================
+// =========================
 // 陀螺仪
-// ============================
+// =========================
 
 function onDeviceOrientation(e) {
 
     const gamma = e.gamma || 0;
 
-    handleInput(gamma);
-
+    handleAngle(gamma);
 }
 
-// ============================
+// =========================
 // PC调试（鼠标模拟）
-// ============================
+// =========================
 
 function onMouseMove(e) {
 
-    const x = e.clientX / window.innerWidth;
+    const ratio = e.clientX / window.innerWidth;
 
-    const gamma = (x - 0.5) * 2 * MAX_GAMMA;
+    const gamma = (ratio - 0.5) * 2 * MAX_ANGLE;
 
-    handleInput(gamma);
+    handleAngle(gamma);
 }
 
-// ============================
-// 动画循环（关键）
-// ============================
+// =========================
+// 动画（手部缓动）
+// =========================
 
 function animate() {
 
@@ -133,9 +128,9 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
-// ============================
-// 启动陀螺仪（兼容 iOS）
-// ============================
+// =========================
+// iOS权限处理
+// =========================
 
 function initGyro() {
 
@@ -143,7 +138,6 @@ function initGyro() {
         window.addEventListener("deviceorientation", onDeviceOrientation, true);
     };
 
-    // iOS 必须授权
     if (
         typeof DeviceOrientationEvent !== "undefined" &&
         typeof DeviceOrientationEvent.requestPermission === "function"
@@ -156,7 +150,9 @@ function initGyro() {
                 const res =
                     await DeviceOrientationEvent.requestPermission();
 
-                if (res === "granted") bind();
+                if (res === "granted") {
+                    bind();
+                }
 
             } catch (err) {
                 console.log(err);
@@ -170,12 +166,15 @@ function initGyro() {
     }
 }
 
-// ============================
-// 初始化
-// ============================
-
-initGyro();
+// =========================
+// PC辅助
+// =========================
 
 window.addEventListener("mousemove", onMouseMove);
 
+// =========================
+// 启动
+// =========================
+
+initGyro();
 animate();
