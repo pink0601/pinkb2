@@ -2,91 +2,81 @@
 // DOM
 // =========================
 
-const bgCenter = document.querySelector(".bg-center");
-const bgLeft = document.querySelector(".bg-left");
-const bgRight = document.querySelector(".bg-right");
+const bg1 = document.getElementById("bg1");
+const bg2 = document.getElementById("bg2");
+const bg3 = document.getElementById("bg3");
 
-const hand = document.getElementById("handLamp");
+const lantern = document.getElementById("lantern");
+const tip = document.getElementById("tip");
 
 // =========================
 // 参数
 // =========================
 
-const LEFT_THRESHOLD = -20;
-const RIGHT_THRESHOLD = 20;
+const THRESHOLD = 20;
 const MAX_ANGLE = 60;
 
-const MAX_MOVE = 80;
+const MAX_MOVE = 120;
 const EASE = 0.08;
 
 // =========================
-// 状态机
+// 状态
 // =========================
 
-let state = "center"; // center | left | right
+let state = "center";
 
 let targetX = 0;
 let currentX = 0;
 
 // =========================
-// 限制角度
+// 背景切换
 // =========================
 
-function clamp(v, min, max) {
-    return Math.min(max, Math.max(min, v));
-}
+function setState(s){
 
-// =========================
-// 状态切换
-// =========================
+    if(state === s) return;
 
-function setState(newState) {
+    state = s;
 
-    if (state === newState) return;
-
-    state = newState;
-
-    // 背景切换
-    if (state === "left") {
-
-        bgLeft.style.opacity = 1;
-        bgCenter.style.opacity = 0;
-        bgRight.style.opacity = 0;
-
-    } else if (state === "right") {
-
-        bgRight.style.opacity = 1;
-        bgCenter.style.opacity = 0;
-        bgLeft.style.opacity = 0;
-
-    } else {
-
-        bgCenter.style.opacity = 1;
-        bgLeft.style.opacity = 0;
-        bgRight.style.opacity = 0;
+    if(state === "left"){
+        bg1.style.opacity = 0;
+        bg2.style.opacity = 1;
+        bg3.style.opacity = 0;
+        tip.innerText = "左侧探路中…";
+    }
+    else if(state === "right"){
+        bg1.style.opacity = 0;
+        bg2.style.opacity = 0;
+        bg3.style.opacity = 1;
+        tip.innerText = "右侧探路中…";
+    }
+    else{
+        bg1.style.opacity = 1;
+        bg2.style.opacity = 0;
+        bg3.style.opacity = 0;
+        tip.innerText = "保持手机平稳";
     }
 }
 
 // =========================
-// 输入处理（核心）
+// 输入处理
 // =========================
 
-function handleAngle(gamma) {
+function handleGamma(gamma){
 
-    gamma = clamp(gamma, -MAX_ANGLE, MAX_ANGLE);
+    gamma = Math.max(-MAX_ANGLE, Math.min(MAX_ANGLE, gamma));
 
-    // 状态判断
-    if (gamma < LEFT_THRESHOLD) {
+    if(gamma < -THRESHOLD){
         setState("left");
-    } 
-    else if (gamma > RIGHT_THRESHOLD) {
+    }
+    else if(gamma > THRESHOLD){
         setState("right");
-    } 
-    else {
+    }
+    else{
         setState("center");
     }
 
-    // 手部映射（连续）
+    // 马灯跟随
     targetX = (gamma / MAX_ANGLE) * MAX_MOVE;
 }
 
@@ -94,83 +84,68 @@ function handleAngle(gamma) {
 // 陀螺仪
 // =========================
 
-function onDeviceOrientation(e) {
-
-    const gamma = e.gamma || 0;
-
-    handleAngle(gamma);
+function onGyro(e){
+    handleGamma(e.gamma || 0);
 }
 
 // =========================
-// PC调试（鼠标模拟）
+// PC模拟
 // =========================
 
-function onMouseMove(e) {
+window.addEventListener("mousemove", e => {
 
     const ratio = e.clientX / window.innerWidth;
 
     const gamma = (ratio - 0.5) * 2 * MAX_ANGLE;
 
-    handleAngle(gamma);
-}
+    handleGamma(gamma);
+});
 
 // =========================
-// 动画（手部缓动）
+// 动画
 // =========================
 
-function animate() {
+function animate(){
 
     currentX += (targetX - currentX) * EASE;
 
-    hand.style.transform =
+    lantern.style.transform =
         `translateX(calc(-50% + ${currentX}px))`;
 
     requestAnimationFrame(animate);
 }
 
 // =========================
-// iOS权限处理
+// iOS权限
 // =========================
 
-function initGyro() {
+function initGyro(){
 
-    const bind = () => {
-        window.addEventListener("deviceorientation", onDeviceOrientation, true);
-    };
-
-    if (
+    if(
         typeof DeviceOrientationEvent !== "undefined" &&
         typeof DeviceOrientationEvent.requestPermission === "function"
-    ) {
+    ){
 
         document.body.addEventListener("touchstart", async () => {
 
-            try {
-
+            try{
                 const res =
                     await DeviceOrientationEvent.requestPermission();
 
-                if (res === "granted") {
-                    bind();
+                if(res === "granted"){
+                    window.addEventListener("deviceorientation", onGyro, true);
                 }
 
-            } catch (err) {
-                console.log(err);
+            }catch(e){
+                console.log(e);
             }
 
-        }, { once: true });
+        }, { once:true });
 
-    } else {
-
-        bind();
+    }else{
+        window.addEventListener("deviceorientation", onGyro, true);
     }
 }
-
-// =========================
-// PC辅助
-// =========================
-
-window.addEventListener("mousemove", onMouseMove);
 
 // =========================
 // 启动
