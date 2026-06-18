@@ -1,169 +1,228 @@
-// =========================
-// 元素获取
-// =========================
+// ======================
+// 元素
+// ======================
 
-const leftBg = document.querySelector(".left");
-const rightBg = document.querySelector(".right");
-const lantern = document.getElementById("lantern");
+const bgCenter = document.querySelector('.bg-center');
+const bgLeft = document.querySelector('.bg-left');
+const bgRight = document.querySelector('.bg-right');
 
-// =========================
-// 参数配置
-// =========================
+const handLamp = document.getElementById('handLamp');
 
-// 背景渐变触发角度
-const MAX_TILT = 35;
+// ======================
+// 参数
+// ======================
 
-// 马灯最大摆动距离
-const MAX_MOVE = 50;
+// 背景切换阈值
+const BG_THRESHOLD = 20;
 
-// 缓动系数（越小越稳）
-const EASING = 0.06;
+// 最大识别角度
+const MAX_GAMMA = 60;
 
-// =========================
-// 状态变量
-// =========================
+// 手灯最大移动距离
+const MAX_HAND_MOVE = 80;
 
-let targetX = 0;
-let currentX = 0;
+// 缓动系数
+const EASING = 0.08;
 
-// =========================
-// 工具函数
-// =========================
+// ======================
+// 状态
+// ======================
 
-function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, value));
+let targetGamma = 0;
+
+let currentHandX = 0;
+let targetHandX = 0;
+
+// ======================
+// 工具
+// ======================
+
+function clamp(v, min, max) {
+    return Math.min(max, Math.max(min, v));
 }
 
-// =========================
-// 陀螺仪处理
-// =========================
+// ======================
+// 背景切换
+// ======================
+
+function updateBackground(gamma) {
+
+    if (gamma < -BG_THRESHOLD) {
+
+        bgCenter.style.opacity = 0;
+        bgLeft.style.opacity = 1;
+        bgRight.style.opacity = 0;
+
+    }
+    else if (gamma > BG_THRESHOLD) {
+
+        bgCenter.style.opacity = 0;
+        bgLeft.style.opacity = 0;
+        bgRight.style.opacity = 1;
+
+    }
+    else {
+
+        bgCenter.style.opacity = 1;
+        bgLeft.style.opacity = 0;
+        bgRight.style.opacity = 0;
+
+    }
+
+}
+
+// ======================
+// 手灯移动
+// ======================
+
+function updateHandTarget(gamma) {
+
+    targetHandX =
+        (gamma / MAX_GAMMA)
+        * MAX_HAND_MOVE;
+
+}
+
+// ======================
+// 统一更新
+// ======================
+
+function updateScene(gamma) {
+
+    gamma = clamp(
+        gamma,
+        -MAX_GAMMA,
+        MAX_GAMMA
+    );
+
+    updateBackground(gamma);
+
+    updateHandTarget(gamma);
+
+}
+
+// ======================
+// 手机陀螺仪
+// ======================
 
 function handleOrientation(event) {
 
-    let gamma = event.gamma || 0;
+    const gamma =
+        event.gamma || 0;
 
-    // 限制范围
-    gamma = clamp(gamma, -45, 45);
+    updateScene(gamma);
 
-    // =====================
-    // 背景透明度计算
-    // =====================
-
-    const leftOpacity = Math.max(
-        0,
-        Math.min(1, -gamma / MAX_TILT)
-    );
-
-    const rightOpacity = Math.max(
-        0,
-        Math.min(1, gamma / MAX_TILT)
-    );
-
-    leftBg.style.opacity = leftOpacity;
-    rightBg.style.opacity = rightOpacity;
-
-    // =====================
-    // 马灯摆动
-    // =====================
-
-    targetX =
-        (gamma / 45) * MAX_MOVE;
 }
 
-// =========================
-// 马灯缓动动画
-// =========================
+// ======================
+// PC鼠标模拟
+// ======================
+
+function handleMouseMove(event) {
+
+    const width =
+        window.innerWidth;
+
+    const ratio =
+        event.clientX / width;
+
+    const gamma =
+        (ratio - 0.5)
+        * 2
+        * MAX_GAMMA;
+
+    updateScene(gamma);
+
+}
+
+// ======================
+// 缓动动画
+// ======================
 
 function animate() {
 
-    currentX +=
-        (targetX - currentX) * EASING;
+    currentHandX +=
+        (targetHandX - currentHandX)
+        * EASING;
 
-    lantern.style.transform =
-        `translateX(${currentX}px)`;
+    handLamp.style.transform =
+        `translateX(calc(-50% + ${currentHandX}px))`;
 
-    requestAnimationFrame(animate);
+    requestAnimationFrame(
+        animate
+    );
+
 }
 
-// =========================
-// 启动陀螺仪
-// =========================
+// ======================
+// 启动
+// ======================
 
-function startMotion() {
-
-    // Android
-    if (
-        typeof DeviceOrientationEvent !== "undefined" &&
-        typeof DeviceOrientationEvent.requestPermission !== "function"
-    ) {
-
-        window.addEventListener(
-            "deviceorientation",
-            handleOrientation,
-            true
-        );
-
-        return;
-    }
+function startDeviceOrientation() {
 
     // iOS
+
     if (
-        typeof DeviceOrientationEvent !== "undefined" &&
-        typeof DeviceOrientationEvent.requestPermission === "function"
+        typeof DeviceOrientationEvent !== 'undefined' &&
+        typeof DeviceOrientationEvent.requestPermission === 'function'
     ) {
 
-        DeviceOrientationEvent
-            .requestPermission()
-            .then(permissionState => {
+        document.body.addEventListener(
+            'touchstart',
+            async () => {
 
-                if (permissionState === "granted") {
+                try {
 
-                    window.addEventListener(
-                        "deviceorientation",
-                        handleOrientation,
-                        true
-                    );
+                    const result =
+                        await DeviceOrientationEvent.requestPermission();
 
-                } else {
+                    if (result === 'granted') {
 
-                    console.warn("陀螺仪权限被拒绝");
+                        window.addEventListener(
+                            'deviceorientation',
+                            handleOrientation
+                        );
+
+                    }
+
+                } catch (err) {
+
+                    console.error(err);
 
                 }
 
-            })
-            .catch(err => {
+            },
+            { once:true }
+        );
 
-                console.error(err);
-
-            });
     }
+
+    // Android
+
+    else {
+
+        window.addEventListener(
+            'deviceorientation',
+            handleOrientation
+        );
+
+    }
+
 }
 
-// =========================
-// 页面启动
-// =========================
+// ======================
+// PC调试模式
+// ======================
 
-window.addEventListener("load", () => {
-
-    startMotion();
-
-    animate();
-
-});
-
-// =========================
-// 页面切换回来重新监听
-// =========================
-
-document.addEventListener(
-    "visibilitychange",
-    () => {
-
-        if (!document.hidden) {
-
-            startMotion();
-
-        }
-
-    }
+window.addEventListener(
+    'mousemove',
+    handleMouseMove
 );
+
+// ======================
+// 初始化
+// ======================
+
+startDeviceOrientation();
+
+animate();
