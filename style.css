@@ -1,0 +1,170 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,
+body{
+    width:100vw;
+    height:100vh;
+    overflow:hidden;
+    background:#000;
+
+    position:fixed;
+    inset:0;
+}
+
+#scene{
+    position:relative;
+    width:100%;
+    height:100%;
+    overflow:hidden;
+    background:#000;
+}
+
+/* 背景层 */
+
+.bg{
+    position:absolute;
+    inset:0;
+
+    background-size:cover;
+    background-position:center;
+    background-repeat:no-repeat;
+
+    transition:opacity .8s ease;
+
+    will-change:opacity;
+}
+
+.center{
+    background-image:url("./assets/images/6-1.png");
+    opacity:1;
+    z-index:1;
+}
+
+.left{
+    background-image:url("./assets/images/6-2.png");
+    opacity:0;
+    z-index:2;
+}
+
+.right{
+    background-image:url("./assets/images/6-3.png");
+    opacity:0;
+    z-index:3;
+}
+
+/* 轻微暗角 */
+
+#scene::after{
+    content:"";
+    position:absolute;
+    inset:0;
+
+    background:
+    radial-gradient(
+        circle,
+        rgba(0,0,0,0) 45%,
+        rgba(0,0,0,.5) 100%
+    );
+
+    z-index:5;
+    pointer-events:none;
+}
+
+/* 雾层 */
+
+#fog{
+    position:absolute;
+    inset:-20%;
+
+    z-index:6;
+
+    background:
+    radial-gradient(
+        circle at 30% 40%,
+        rgba(255,255,255,.04),
+        transparent 40%
+    ),
+    radial-gradient(
+        circle at 70% 70%,
+        rgba(255,255,255,.03),
+        transparent 35%
+    );
+
+    animation:fogMove 18s linear infinite;
+
+    pointer-events:none;
+}
+
+@keyframes fogMove{
+
+    0%{
+        transform:translateX(-30px);
+    }
+
+    50%{
+        transform:translateX(30px);
+    }
+
+    100%{
+        transform:translateX(-30px);
+    }
+}
+
+/* 手灯层 */
+
+#lanternWrap{
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+
+    z-index:20;
+
+    pointer-events:none;
+}
+
+/*
+假设素材主体在左侧
+右边大量透明区域
+*/
+
+#lantern{
+    position:absolute;
+
+    left:-3vw;
+    bottom:25vh;
+
+    width:65vw;
+    height:auto;
+
+    transform:translateX(0);
+}/* 权限提示 */
+
+#tip{
+
+    position:absolute;
+
+    left:50%;
+    top:50%;
+
+    transform:translate(-50%,-50%);
+
+    color:white;
+
+    font-size:18px;
+
+    letter-spacing:2px;
+
+    z-index:100;
+
+    padding:12px 18px;
+
+    border-radius:999px;
+
+    background:rgba(0,0,0,.5);
+
+    backdrop-filter:blur(8px);
+}
